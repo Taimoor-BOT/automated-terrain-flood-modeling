@@ -12,7 +12,7 @@ I built this primarily with `numpy`, `rasterio`, `pysheds`, and `geopandas`. The
 
 ### How I Handled the Edge Cases
 During the build for the Gilgit Valley, I hit two massive friction points:
-1. **The API Timeout:** The Overpass API kept crashing due to the scale of the region. With the help of AI, I engineered a failback that autonomously scrapes the bulk Geofabrik FTP server, unzips the national database, and loads only the local bounding box.
+1. **The API Timeout:** The Overpass API kept crashing due to the scale of the region. I implemented an automated failover that scrapes the bulk Geofabrik FTP server, unzips the national database, and loads only the local bounding box.
 2. **The 600-Million-Cubic-Meter Bug:** Standard spatial joins (`sjoin`) were grabbing entire 100km highways if even 1mm touched the flood zone, resulting in mathematically absurd levee volumes. I fixed this by implementing strict geometric clipping (`clip`), which physically cut the vector lines at the flood boundary, dropping the levee earthwork calculation down to a realistic 49.2 million cubic meters.
 
 Check the `src` folder for the 3 Jupyter Notebooks containing the execution logic.
