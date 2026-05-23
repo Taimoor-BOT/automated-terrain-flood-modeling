@@ -1,24 +1,21 @@
 # Automated Terrain-Based Flood Hazard Modeling (HAND)
 
-## 1. The Problem
-Manual hydrodynamic modeling (e.g., HEC-RAS) takes weeks of GUI-based data preparation, digitization, and processing. It creates human bottlenecks and scales poorly across massive regions.
+Manual hydrodynamic modeling in HEC-RAS is incredibly slow. I got tired of the GUI bottlenecks, so I built this Python pipeline to automate the entire process using the Height Above Nearest Drainage (HAND) algorithm. 
 
-## 2. The Engineering Solution
-A 100% automated Python pipeline that generates accurate, hydrostatic inundation maps and vulnerability overlays in minutes. 
-* Programmatic ingestion of Copernicus 30m DEM arrays.
-* Fully automated hydrological conditioning (pit/depression filling) and D8 flow routing.
-* Dynamic calculation of the Height Above Nearest Drainage (HAND) matrix.
+This script ingests raw DEM arrays, hydro-conditions the terrain, and spits out accurate inundation maps and earthwork volumes in minutes instead of weeks.
 
-## 3. Pipeline Resilience (The Edge Cases)
-* **API Failbacks:** When the Overpass API timed out on massive regional queries, the pipeline was engineered to autonomously fall back to bulk Geofabrik FTP downloads, unzipping and clipping the national database to the local bounding box.
-* **Geometric Precision:** Utilized `geopandas.clip()` instead of standard spatial joins (`sjoin`) to physically slice road geometries at the flood boundary, turning a 639-million-cubic-meter calculation error into a physically accurate 49.2-million-cubic-meter engineering proposal.
+### The Stack & The Math
+I built this primarily with `numpy`, `rasterio`, `pysheds`, and `geopandas`. The pipeline handles:
+* Hydrological conditioning (filling pits/depressions in the DEM arrays).
+* D8 flow routing and stream network extraction.
+* Pure hydrostatic calculation of flood stages (no hydrodynamic time-stepping).
 
-## 4. The Tech Stack
-* `numpy` (Matrix manipulation)
-* `pysheds` (Hydrological routing)
-* `rasterio` (Spatial array processing)
-* `geopandas` / `shapely` (Vector geometry intersection)
-* **3 Jupyter Notebooks** containing the core execution logic.
+### How I Handled the Edge Cases
+During the build for the Gilgit Valley, I hit two massive friction points:
+1. **The API Timeout:** The Overpass API kept crashing due to the scale of the region. I engineered a failback that autonomously scrapes the bulk Geofabrik FTP server, unzips the national database, and loads only the local bounding box.
+2. **The 600-Million-Cubic-Meter Bug:** Standard spatial joins (`sjoin`) were grabbing entire 100km highways if even 1mm touched the flood zone, resulting in mathematically absurd levee volumes. I fixed this by implementing strict geometric clipping (`clip`), which physically cut the vector lines at the flood boundary, dropping the levee earthwork calculation down to a realistic 49.2 million cubic meters.
+
+Check the `src` folder for the 3 Jupyter Notebooks containing the execution logic.
 
 ---
 
